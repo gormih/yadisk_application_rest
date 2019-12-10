@@ -120,8 +120,8 @@ class YaDisk(object):
         answer = requests.get(self.base_url + command,
                               headers=self.req_headers,
                               params=params)
-        if answer.status_code == 200:
-            return _checked_data_(answer.json())
+
+        return _checked_data_(answer)
 
     def put(self, path, file_name, overwrite=True):
         try:
