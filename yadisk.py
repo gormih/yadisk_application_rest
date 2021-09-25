@@ -5,7 +5,7 @@
 Documentation for this module.
 
 Library for access to functions on Yandex Disk Rest API
-Compatible with python 3.0+
+Compatible with python 3.4+
 """
 import requests
 import os
@@ -89,14 +89,25 @@ def chunk_req(file_name, block_size=1024, chunks=-1):
 
 
 class YaDisk(object):
-    def __init__(self, token):
-        self.base_url = 'https://cloud-api.yandex.net:443/v1/disk/'
+    def __init__(self,
+                 token,
+                 base_api_url='https://cloud-api.yandex.net:443/v1/disk/'):
+        """
+        :param token: oauth2 token for application
+        :param base_api_url: base url for rest API
+        """
+        self.base_api_url = base_api_url
         self.req_headers = {'Authorization': f'OAuth {token}', }
 
     def ls(self, path, not_exits_create=False):
+        """
+        :param path: target path in application root directory
+        :param not_exits_create: create directory path, if not exits
+        :return: json answer from service
+        """
         params = {'path': f'app:/{path}'}
         command = 'resources'
-        answer = requests.get(self.base_url + command,
+        answer = requests.get(self.base_api_url + command,
                               headers=self.req_headers,
                               params=params)
         if answer.status_code == 404:
@@ -105,7 +116,7 @@ class YaDisk(object):
                 for i in range(0, len(paths) - 1):
                     cur_path = '/'.join(paths[0:i])
                     params = {'path': f'app:/{cur_path}'}
-                    answer = requests.get(self.base_url + command,
+                    answer = requests.get(self.base_api_url + command,
                                           headers=self.req_headers,
                                           params=params)
                     if answer.status_code == 404:
@@ -114,16 +125,27 @@ class YaDisk(object):
         return _checked_data_(answer)
 
     def get_link_for_upload(self, path, overwrite=True):
+        """
+        :param path: target path in application root directory
+        :param overwrite: command for overwrite
+        :return: url for put request
+        """
         params = {'path': f'{path}',
                   'overwrite': f'{str(overwrite).lower()}'}
         command = 'resources/upload/'
-        answer = requests.get(self.base_url + command,
+        answer = requests.get(self.base_api_url + command,
                               headers=self.req_headers,
                               params=params)
 
         return _checked_data_(answer)
 
     def put(self, path, file_name, overwrite=True):
+        """
+        :param path: target path in application root directory
+        :param file_name: name of source file
+        :param overwrite: flag for overwrite
+        :return: json answer from service
+        """
         try:
             url = self.get_link_for_upload(f'{path}{os.path.basename(file_name)}',
                                            overwrite=overwrite)['href']
@@ -133,27 +155,41 @@ class YaDisk(object):
         return _checked_data_(answer)
 
     def mkdir(self, path):
+        """
+        :param path: target path in application root directory
+        :return: json answer from service
+        """
         params = {'path': f'app:/{path}'}
         command = 'resources'
-        answer = requests.put(self.base_url + command,
+        answer = requests.put(self.base_api_url + command,
                               params=params,
                               headers=self.req_headers)
 
         return _checked_data_(answer)
 
     def rm(self, path):
+        """
+        :param path: target path in application root directory
+        :return: json answer from service
+        """
         params = {'path': f'app:/{path}'}
         command = 'resources'
-        answer = requests.delete(self.base_url + command,
+        answer = requests.delete(self.base_api_url + command,
                                  params=params,
                                  headers=self.req_headers)
         return _checked_data_(answer)
 
     def mv(self, source_path, target_path):
+        """
+        :param source_path: source path in application root directory
+        :param target_path: target path in application root directory
+        :return: json answer from service
+        """
+
         params = {'path': f'app:/{target_path}',
                   'from': f'app:/{source_path}'}
         command = 'resources/move'
-        answer = requests.post(self.base_url + command,
+        answer = requests.post(self.base_api_url + command,
                                params=params,
                                headers=self.req_headers)
         return _checked_data_(answer)
